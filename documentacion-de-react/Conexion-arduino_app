@@ -1,0 +1,190 @@
+La conexión **Arduino → React Native** vía **Bluetooth** es totalmente posible y se usa mucho en proyectos IoT. Sin embargo, hay **dos formas principales** de hacerlo, y la elección cambia mucho la dificultad y las librerías que necesitas.
+
+### 1. Bluetooth Classic (Serial) – El más común con módulos HC-05 / HC-06
+
+Este es el método tradicional. El Arduino se comunica como si fuera un puerto serie inalámbrico.
+
+**En el Arduino:**
+- Usa un módulo **HC-05** (mejor porque soporta master/slave) o **HC-06** (solo slave).
+- Conexiones típicas (Arduino Uno):
+  - TX del HC-05 → RX (pin 0) del Arduino o usa SoftwareSerial en pines 10/11.
+  - RX del HC-05 → TX (pin 1) del Arduino.
+  - VCC → 5V, GND → GND.
+- Código básico en Arduino:
+
+```cpp
+#include <SoftwareSerial.h>
+SoftwareSerial BT(10, 11); // RX, TX
+
+void setup() {
+  Serial.begin(9600);
+  BT.begin(9600);
+  pinMode(LED_BUILTIN, OUTPUT);
+}
+
+void loop() {
+  if (BT.available()) {
+    char data = BT.read();
+    if (data == '1') digitalWrite(LED_BUILTIN, HIGH);
+    if (data == '0') digitalWrite(LED_BUILTIN, LOW);
+  }
+}
+```
+
+**En React Native:**
+- **Problema importante**: No existe una librería moderna y bien mantenida para **Bluetooth Classic (SPP)** en React Native que funcione bien en **Android + iOS** al mismo tiempo.
+- La librería más usada antiguamente era `react-native-bluetooth-serial`, pero está bastante abandonada.
+- En **iOS** es especialmente complicado porque Apple no permite fácilmente el perfil SPP (Bluetooth Classic serial).
+
+**Recomendación actual (2026):**  
+Si puedes, **evita Bluetooth Classic** y pasa al punto 2 (BLE). Es mucho más estable con React Native.
+
+### 2. Bluetooth Low Energy (BLE) – La forma recomendada hoy
+
+Esta es la mejor opción en la mayoría de proyectos nuevos.
+
+**En el Arduino / ESP32:**
+- Lo ideal es usar un **ESP32** (tiene BLE integrado, mucho más potente y barato que un Arduino Uno + HC-05).
+- Si usas Arduino Uno/Nano clásico → necesitas un módulo **HM-10** o similar (BLE).
+
+Código de ejemplo simple con ESP32 (usando la librería Arduino BLE):
+
+```cpp
+#include <BLEDevice.h>
+#include <BLEServer.h>
+
+#define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+
+BLECharacteristic *pCharacteristic;
+
+void setup() {
+  Serial.begin(115200);
+  BLEDevice::init("MiESP32");  // Nombre que verá el celular
+
+  BLEServer *pServer = BLEDevice::createServer();
+  BLEService *pService = pServer->createService(SERVICE_UUID);
+
+  pCharacteristic = pService->createCharacteristic(
+                      CHARACTERISTIC_UUID,
+                      BLECharacteristic::PROPERTY_READ |
+                      BLECharacteristic::PROPERTY_WRITE |
+                      BLECharacteristic::PROPERTY_NOTIFY
+                    );
+
+  pService->start();
+  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->addServiceUUID(SERVICE_UUID);
+  pAdvertising->setScanResponse(true);
+  BLEDevice::startAdvertising();
+  Serial.println("Esperando conexión BLE...");
+}
+
+void loop() {
+  // Puedes notificar datos al celular
+  String valor = "Hola desde ESP32";
+  pCharacteristic->setValue(valor.c_str());
+  pCharacteristic->notify();
+  delay(2000);
+}
+```
+
+**En React Native (la mejor librería actualmente):**
+
+La librería más recomendada y mantenida es:
+
+- **`react-native-ble-plx`** (de dotintent) → La más completa y estable.
+
+Otras alternativas:
+- `react-native-ble-manager`
+
+**Pasos generales en React Native con `react-native-ble-plx`:**
+
+1. Instalar la librería:
+
+```bash
+# Si usas Expo (recomendado):
+npx expo install react-native-ble-plx @config-plugins/react-native-ble-plx expo-dev-client
+
+# Si usas React Native CLI:
+npm install react-native-ble-plx
+```
+
+2. Configurar permisos en `app.json` (Expo) o AndroidManifest / Info.plist.
+
+3. Código básico:
+
+```tsx
+import { BleManager } from 'react-native-ble-plx';
+import { useEffect, useState } from 'react';
+
+const manager = new BleManager();
+
+function App() {
+  const [device, setDevice] = useState(null);
+
+  useEffect(() => {
+    const subscription = manager.onStateChanged((state) => {
+      if (state === 'PoweredOn') {
+        scanDevices();
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  const scanDevices = () => {
+    manager.startDeviceScan(null, null, (error, scannedDevice) => {
+      if (scannedDevice && scannedDevice.name === 'MiESP32') {
+        manager.stopDeviceScan();
+        connectToDevice(scannedDevice);
+      }
+    });
+  };
+
+  const connectToDevice = async (dev) => {
+    const connected = await dev.connect();
+    await connected.discoverAllServicesAndCharacteristics();
+    setDevice(connected);
+    // Leer o escribir en características
+  };
+
+  // Ejemplo de escribir
+  const sendData = async () => {
+    if (device) {
+      await device.writeCharacteristicWithResponseForService(
+        SERVICE_UUID,
+        CHARACTERISTIC_UUID,
+        btoa("1")  // convertir a base64
+      );
+    }
+  };
+
+  return /* tu UI */;
+}
+```
+
+### Resumen de recomendación (2026)
+
+| Tipo de Bluetooth     | Hardware recomendado      | Dificultad en RN | Recomendado |
+|-----------------------|---------------------------|------------------|-----------|
+| **Bluetooth Classic** | HC-05 / HC-06             | Alta (sobre todo iOS) | Solo si ya lo tienes |
+| **BLE**               | **ESP32** (mejor opción)  | Media-Baja       | **Sí, fuertemente recomendado** |
+
+**Ventajas de usar ESP32 + BLE:**
+- Más barato y potente.
+- Mejor soporte en React Native.
+- Menos problemas de compatibilidad.
+- Puedes usar **Notifications** (el Arduino envía datos automáticamente cuando cambian).
+
+### Recursos útiles
+- Tutorial muy bueno con ESP32 + React Native BLE: busca el repo `palmmaximilian/ReactNativeArduinoBLE` en GitHub.
+- Documentación oficial de `react-native-ble-plx`.
+- Blog detallado: "Bluetooth Low Energy (BLE) with React Native and Arduino" de cjoshmartin.
+
+¿Quieres que te dé un ejemplo completo paso a paso para un caso específico? Por ejemplo:
+- Encender/apagar un LED
+- Enviar datos del sensor (temperatura, etc.)
+- Usar Expo o React Native CLI
+
+Dime qué hardware tienes (Arduino Uno, ESP32, HC-05, etc.) y qué quieres hacer, y te armo el código más adecuado.
