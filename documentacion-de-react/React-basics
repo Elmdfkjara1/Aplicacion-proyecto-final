@@ -1,0 +1,30 @@
+React Native es un framework para crear apps móviles (Android/iOS) usando JavaScript y React. En vez de HTML usás componentes nativos
+Por ejemplo: 
+<View> → como un div
+<Text> → texto
+<Image> → imágenes
+
+1. Componentes
+
+Son funciones que devuelven UI (User Interface) Como por ejemplo:
+--------------------------
+function Saludo() {
+  return <Text>Hola</Text>;
+}
+--------------------------
+2.props : Las props (de properties) son datos que un componente recibe desde afuera. Algo asi como los parametros de una funcion, pero no es un solo dato, es un objeto .json(Texto) : 
+
+import { Text } from 'react-native'; 
+// Importamos el componente Text desde React Native
+
+function Hora(props) {  
+  // Creamos un componente llamado Hora
+  // "props" es un objeto que contiene los datos que recibe el componente
+
+  return <Text>{props.horaLocal}</Text>; 
+  // Devolvemos un componente Text mostrando la propiedad horaLocal
+  // Si no usamos return, el componente no renderiza nada
+}
+
+// Uso del componente (esto lo hace otro componente, no el usuario directamente)
+<Hora horaLocal="19:00" />
