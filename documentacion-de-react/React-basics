@@ -28,3 +28,85 @@ function Hora(props) {
 
 // Uso del componente (esto lo hace otro componente, no el usuario directamente)
 <Hora horaLocal="19:00" />
+
+
+
+
+3. useState
+
+useState es una función que permite guardar datos que pueden cambiar dentro de un componente.
+
+Se usa para cosas dinámicas como:
+
+contadores
+texto
+botones
+estados de la app
+
+
+                  Sintaxis
+const [estado, setEstado] = useState(valorInicial);
+estado → valor actual
+setEstado → función para cambiar ese valor
+ Ejemplo
+const [numero, setNumero] = useState(0);
+
+ numero empieza en 0
+
+ Cambiar el estado
+
+Para modificar el valor:
+
+setNumero(numero + 1);
+
+
+
+  IMPORTANTE
+
+No se debe modificar el estado directamente:
+
+numero = numero + 1; 
+
+ Esto NO funciona porque React no detecta el cambio.
+
+  Forma correcta
+setNumero(numero + 1);
+
+ Esto le avisa a React que el estado cambió y vuelve a renderizar el componente.
+
+ ¿Qué pasa cuando cambia el estado?
+Se ejecuta setNumero(...)
+React actualiza el valor
+React vuelve a renderizar el componente
+La UI se actualiza automáticamente
+
+4. Styles 
+
+En react native se usa StyleSheet, que se tiene que importar al comienzo del codigo como importamos "Text" por ejemplo. Tiene un parecido a CSS, aunque no son lo mismo.
+se crea una constante Styles, donde adentro guardaremos los estilos, y luego para aplicarlos a un Text por ejemplo, se llama como propiedad. 
+ejemplo: 
+import { StyleSheet, View, Text } from 'react-native'; //importamos lo que vamos a usar
+
+export default function App() {
+  return (
+    <View style={styles.container}> //aca llamamos a las "clases" de estilos que creamos en la constante styles
+      <Text style={styles.texto}>Hola</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: 'black',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  texto: {
+    color: 'white',
+    fontSize: 20
+  }
+});
+
+
+
