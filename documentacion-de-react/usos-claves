@@ -1,0 +1,42 @@
+Botones:
+<Button title="Click" onPress={() => console.log("Hola")} />
+//muestra un Hola en terminal (no en UI) cuando se toca un boton.
+-----------------------------------------------------------------
+2. useState + eventos (MUY IMPORTANTE)
+import [useState} from "React";
+const [contador, setContador] = useState(0);
+<Button 
+  title="Sumar" 
+  onPress={() => setContador(contador + 1)} 
+/>
+//cuando se le da click a un boton, suma usando la variable contador de la funcion setContador.
+
+------------------------------------------------------------------
+Como funcionan los botones con funciones. 
+
+en react podes almacenar una funcion dentro de un boton, y que solo cuando el boton sea tocado, se ejecute la funcion. Un Onclick pero un poco mejor.
+
+ejemplo: 
+import { View, Text, Button } from 'react-native'; //se importan todos los "libros" que necesitamos para el siguiente bloque de codigo
+
+import { useState } from 'react'; //esto se importa por separado ya que pertenecen a lugares distintos, uno es de React native, y otro de React
+
+export default function App() { // aca definimos la funcion principal de nuestra app, la que se muestra primera en pantalla. 
+  const [numero, setNumero] = useState(0); //seteamos el useState y nombramos a cada seccion del array
+
+  function sumar() { //funcion basica que no devuelve nada, solo calcula
+    setNumero(numero + 1);
+  }
+
+  return (
+    <View>
+      <Text>Contador: {numero}</Text> //aca se muestra en pantalla el valor de numero
+
+      <Button 
+        title="Sumar"
+        onPress={sumar} //aca ejecutamos la funcion de sumar, para que cambie el valor con setNumero que asi mismo cambiar el valor de numero con un +1
+      /> 
+    </View>
+  );
+}
+------------------------------------------------------------------
