@@ -45,6 +45,7 @@ estados de la app
 
 
                   Sintaxis
+import [useState] from 'React';
 const [estado, setEstado] = useState(valorInicial);
 estado → valor actual
 setEstado → función para cambiar ese valor
@@ -89,7 +90,7 @@ import { StyleSheet, View, Text } from 'react-native'; //importamos lo que vamos
 
 export default function App() {
   return (
-    <View style={styles.container}> //aca llamamos a las "clases" de estilos que creamos en la constante styles
+    <View style={styles.container}> //aca llamamos a las propiedades de estilos que creamos en la constante styles, como propiedad de "view".
       <Text style={styles.texto}>Hola</Text>
     </View>
   );
@@ -107,6 +108,9 @@ const styles = StyleSheet.create({
     fontSize: 20
   }
 });
+//segun este codigo, el container tendria que tener un fondo negro, que sea flexbox, centrado y con los items en el medio.
+// el texto "Hola" tendria que ser de color blanco, con un fontsize de 20.
+
 
 
 
